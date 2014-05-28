@@ -17,13 +17,21 @@
       className: 'is-sticky',
       wrapperClassName: 'sticky-wrapper',
       center: false,
-      getWidthFrom: ''
+      getWidthFrom: '',
+      responsiveBreakpoint: 0
     },
     $window = $(window),
     $document = $(document),
     sticked = [],
     windowHeight = $window.height(),
     scroller = function() {
+      placer();
+    },
+    resizer = function() {
+      windowHeight = $window.height();
+      placer();
+    },
+    placer = function() {
       var scrollTop = $window.scrollTop(),
         documentHeight = $document.height(),
         dwh = documentHeight - windowHeight,
@@ -34,7 +42,7 @@
           elementTop = s.stickyWrapper.offset().top,
           etse = elementTop - s.topSpacing - extra;
 
-        if (scrollTop <= etse) {
+        if (scrollTop <= etse || $window.width() < s.responsiveBreakpoint) {
           if (s.currentTop !== null) {
             s.stickyElement
               .css('position', '')
@@ -66,9 +74,6 @@
         }
       }
     },
-    resizer = function() {
-      windowHeight = $window.height();
-    },
     methods = {
       init: function(options) {
         var o = $.extend(defaults, options);
@@ -98,7 +103,8 @@
             currentTop: null,
             stickyWrapper: stickyWrapper,
             className: o.className,
-            getWidthFrom: o.getWidthFrom
+            getWidthFrom: o.getWidthFrom,
+            responsiveBreakpoint: o.responsiveBreakpoint
           });
         });
       },
