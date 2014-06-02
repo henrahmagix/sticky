@@ -17,7 +17,8 @@
       className: 'is-sticky',
       wrapperClassName: 'sticky-wrapper',
       center: false,
-      getWidthFrom: null
+      getWidthFrom: null,
+      getConstraintFrom: null
     },
     $window = $(window),
     $document = $(document),
@@ -32,7 +33,13 @@
       for (var i = 0; i < sticked.length; i++) {
         var s = sticked[i],
           elementTop = s.stickyWrapper.offset().top,
-          etse = elementTop - s.topSpacing - extra;
+          etse = elementTop - s.topSpacing - extra,
+          constraintHeight = Infinity,
+          stickyHeight = s.stickyElement.height();
+
+        if (s.getConstraintFrom !== null) {
+          constraintHeight = $(s.getConstraintFrom).height();
+        }
 
         if (scrollTop <= etse) {
           if (s.currentTop !== null) {
@@ -40,32 +47,57 @@
               'position': '',
               'top': ''
             };
+            var cssWrapperReset = {
+              'height': ''
+            };
             if (s.getWidthFrom !== null) {
               cssReset['width'] = '';
             }
+            if (s.center) {
+              cssWrapperReset['width'] = '';
+              cssWrapperReset['margin-left'] = '';
+              cssWrapperReset['margin-right'] = '';
+            }
             s.stickyElement.css(cssReset);
-            s.stickyElement.parent().removeClass(s.className);
+            s.stickyWrapper.css(cssWrapperReset).removeClass(s.className);
             s.currentTop = null;
           }
         }
         else {
-          var newTop = documentHeight - s.stickyElement.outerHeight()
+          var newTop,
+            stickyOuterHeight = s.stickyElement.outerHeight(),
+            stickyOuterWidth = s.stickyElement.outerWidth(),
+            currentTop = documentHeight - stickyOuterHeight
             - s.topSpacing - s.bottomSpacing - scrollTop - extra;
-          if (newTop < 0) {
-            newTop = newTop + s.topSpacing;
+          var stickyTop = scrollTop - elementTop;
+          var outOfBounds = (constraintHeight - stickyTop - s.bottomSpacing <= stickyHeight);
+          if (currentTop < 0) {
+            newTop = currentTop + s.topSpacing;
           } else {
             newTop = s.topSpacing;
           }
-          if (s.currentTop != newTop) {
-            s.stickyElement
-              .css('position', 'fixed')
-              .css('top', newTop);
-
+          if (stickyHeight < constraintHeight) {
+            var stickyCSS = {
+              'position': 'fixed',
+              'top': newTop
+            };
+            var wrapperCSS = {
+              'height': stickyOuterHeight
+            };
             if (s.getWidthFrom !== null) {
-              s.stickyElement.css('width', $(s.getWidthFrom).width());
+              stickyCSS['width'] = $(s.getWidthFrom).width();
             }
-
-            s.stickyElement.parent().addClass(s.className);
+            if (s.center) {
+              wrapperCSS['width'] = stickyOuterWidth;
+              wrapperCSS['margin-left'] = 'auto';
+              wrapperCSS['margin-right'] = 'auto';
+            }
+            if (outOfBounds) {
+              stickyCSS['position'] = 'relative';
+              stickyCSS['top'] = constraintHeight - stickyHeight - s.bottomSpacing;
+            }
+            s.stickyElement.css(stickyCSS);
+            s.stickyWrapper.css(wrapperCSS).addClass(s.className);
             s.currentTop = newTop;
           }
         }
@@ -85,25 +117,23 @@
             .attr('id', stickyId + '-sticky-wrapper')
             .addClass(o.wrapperClassName);
           stickyElement.wrapAll(wrapper);
-
-          if (o.center) {
-            stickyElement.parent().css({width:stickyElement.outerWidth(),marginLeft:"auto",marginRight:"auto"});
-          }
-
-          if (stickyElement.css("float") == "right") {
-            stickyElement.css({"float":"none"}).parent().css({"float":"right"});
-          }
-
           var stickyWrapper = stickyElement.parent();
-          stickyWrapper.css('height', stickyElement.outerHeight());
+
+          if (stickyElement.css('float') === 'right') {
+            stickyElement.css('float', 'none');
+            stickyWrapper('float', 'right');
+          }
+
           sticked.push({
             topSpacing: o.topSpacing,
             bottomSpacing: o.bottomSpacing,
             stickyElement: stickyElement,
             currentTop: null,
+            center: o.center,
             stickyWrapper: stickyWrapper,
             className: o.className,
-            getWidthFrom: o.getWidthFrom
+            getWidthFrom: o.getWidthFrom,
+            getConstraintFrom: o.getConstraintFrom
           });
         });
       },
