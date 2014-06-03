@@ -78,8 +78,8 @@
           }
           if (stickyHeight < constraintHeight) {
             var stickyCSS = {
-              'position': 'fixed',
-              'top': newTop
+              'position': outOfBounds ? 'relative' : 'fixed',
+              'top': outOfBounds ? constraintHeight - stickyHeight - s.bottomSpacing : newTop
             };
             var wrapperCSS = {
               'height': stickyOuterHeight
@@ -91,10 +91,6 @@
               wrapperCSS['width'] = stickyOuterWidth;
               wrapperCSS['margin-left'] = 'auto';
               wrapperCSS['margin-right'] = 'auto';
-            }
-            if (outOfBounds) {
-              stickyCSS['position'] = 'relative';
-              stickyCSS['top'] = constraintHeight - stickyHeight - s.bottomSpacing;
             }
             s.stickyElement.css(stickyCSS);
             s.stickyWrapper.css(wrapperCSS).addClass(s.className);
